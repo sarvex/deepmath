@@ -34,10 +34,15 @@ class DFileTest(tf.test.TestCase):
 
   def testShardedFilenames(self):
     for suffix in '', '.png':
-      shards = dfile.sharded_filenames('prefix@3' + suffix)
-      self.assertEqual(shards, ['prefix-00000-of-00003' + suffix,
-                                'prefix-00001-of-00003' + suffix,
-                                'prefix-00002-of-00003' + suffix])
+      shards = dfile.sharded_filenames(f'prefix@3{suffix}')
+      self.assertEqual(
+          shards,
+          [
+              f'prefix-00000-of-00003{suffix}',
+              f'prefix-00001-of-00003{suffix}',
+              f'prefix-00002-of-00003{suffix}',
+          ],
+      )
 
   def testSharedFilenamesInvalidSpec(self):
     with self.assertRaisesRegexp(ValueError, r'Invalid shard spec'):

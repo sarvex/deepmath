@@ -148,7 +148,7 @@ def main(_):
                   metrics=['acc'])
 
   # Define a callback for saving the model to the log directory.
-  checkpoint_path = os.path.join(FLAGS.logdir, FLAGS.model_name + '.h5')
+  checkpoint_path = os.path.join(FLAGS.logdir, f'{FLAGS.model_name}.h5')
   checkpointer = keras.callbacks.ModelCheckpoint(
       checkpoint_path, save_best_only=True)
 
@@ -166,10 +166,8 @@ def main(_):
                                 verbose=FLAGS.verbose,
                                 callbacks=[checkpointer, tensorboard_vis])
 
-  # Save training history to a JSON file.
-  f = open(os.path.join(FLAGS.logdir, 'history.json'), 'w')
-  f.write(json.dumps(history.history))
-  f.close()
+  with open(os.path.join(FLAGS.logdir, 'history.json'), 'w') as f:
+    f.write(json.dumps(history.history))
 
 
 if __name__ == '__main__':

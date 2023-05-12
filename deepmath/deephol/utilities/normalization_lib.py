@@ -76,8 +76,7 @@ def normalize_genpvars(expr: Text):
   expr_dag = sexpr.SExpressionGraph(expr)
   roots = expr_dag.roots()
   if len(roots) != 1:
-    raise ValueError('Attempting to normalize S-expression without root: %s' %
-                     expr)
+    raise ValueError(f'Attempting to normalize S-expression without root: {expr}')
   recursive_helper(expr_dag, roots[0], [])
   return expr_dag.to_text(roots[0])
 
@@ -155,11 +154,9 @@ def theorem_database_contains_duplicates(
 
 def theorem_database_contains_escaped_single_quotes(
     database: proof_assistant_pb2.TheoremDatabase):
-  for theorem in database.theorems:
-    if '\\\'' in theorem.conclusion or any(
-        [('\\\'' in h) for h in theorem.hypotheses]):
-      return True
-  return False
+  return any('\\\'' in theorem.conclusion or any('\\\'' in h
+                                                 for h in theorem.hypotheses)
+             for theorem in database.theorems)
 
 
 def theorem_databases_intersect(db1: proof_assistant_pb2.TheoremDatabase,

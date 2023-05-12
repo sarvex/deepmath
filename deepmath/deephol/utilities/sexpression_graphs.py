@@ -23,9 +23,9 @@ def to_node_id(sexp: Text) -> NodeID:
 def theorem_sexpression(theorem: proof_assistant_pb2.Theorem) -> Text:
   """Converts theorem object to an S-expression."""
   if theorem.tag == proof_assistant_pb2.Theorem.GOAL:
-    return '(g (%s) %s)' % (' '.join(theorem.hypotheses), theorem.conclusion)
+    return f"(g ({' '.join(theorem.hypotheses)}) {theorem.conclusion})"
   if theorem.tag == proof_assistant_pb2.Theorem.THEOREM:
-    return '(h (%s) %s)' % (' '.join(theorem.hypotheses), theorem.conclusion)
+    return f"(h ({' '.join(theorem.hypotheses)}) {theorem.conclusion})"
   if theorem.tag == proof_assistant_pb2.Theorem.DEFINITION:
     if theorem.hypotheses:
       raise ValueError('Detected definition with hypotheses.')
@@ -34,7 +34,7 @@ def theorem_sexpression(theorem: proof_assistant_pb2.Theorem) -> Text:
   if theorem.tag == proof_assistant_pb2.Theorem.TYPE_DEFINITION:
     if theorem.hypotheses:
       raise ValueError('Detected type definition with hypotheses.')
-    return '(t %s %s)' % (theorem.type_definition.type_name, theorem.conclusion)
+    return f'(t {theorem.type_definition.type_name} {theorem.conclusion})'
   raise ValueError('Unknown theorem tag.')
 
 
@@ -218,12 +218,12 @@ class SExpressionGraph(object):
     variable_node = self.children[node][1]
     if self.labels[self.children[variable_node][0]] != 'v':
       raise ValueError(
-          'Expected a variable node (v <type> <var_name>). Expression was %s' %
-          self.to_text(node))
+          f'Expected a variable node (v <type> <var_name>). Expression was {self.to_text(node)}'
+      )
     if not self.is_leaf_node(self.children[variable_node][2]):
       raise ValueError(
-          'Expected a variable node (v <type> <var_name>). Expression was: %s' %
-          self.to_text(node))
+          f'Expected a variable node (v <type> <var_name>). Expression was: {self.to_text(node)}'
+      )
     return self.labels[self.children[variable_node][2]]
 
   def is_variable(self, node):
@@ -236,7 +236,6 @@ class SExpressionGraph(object):
     """Relies on the S-expression originating from HOL Light."""
     if not self.is_leaf_node(node):
       return False
-    return any([
+    return any(
         self.is_variable(p) and self.children[p][2] == node
-        for p in self.parents[node]
-    ])
+        for p in self.parents[node])

@@ -67,24 +67,20 @@ def loop_round_string(loop_round: int):
 
 
 def _check_directory(filename: str) -> Optional[str]:
-  if gfile.Exists(filename):
-    if gfile.IsDirectory(filename):
-      return None
-    else:
-      return '"%s" is expected to be a directory.' % filename
+  if not gfile.Exists(filename):
+    return f'Expected directory {filename} does not exist.'
+  if gfile.IsDirectory(filename):
+    return None
   else:
-    return 'Expected directory %s does not exist.' % filename
+    return f'"{filename}" is expected to be a directory.'
 
 
 def _check_file(filename: str) -> Optional[str]:
-  if gfile.Exists(filename):
-    stat_proto = gfile.Stat(filename, stat_proto=True)
-    if stat_proto.file_type == types_pb2.FILE:
-      return None
-    else:
-      return '"%s" is expected to be a regular file.' % filename
-  else:
-    return 'Expected file %s does not exist.' % filename
+  if not gfile.Exists(filename):
+    return f'Expected file {filename} does not exist.'
+  stat_proto = gfile.Stat(filename, stat_proto=True)
+  return (None if stat_proto.file_type == types_pb2.FILE else
+          f'"{filename}" is expected to be a regular file.')
 
 
 def make_dir(dir_name: str) -> str:
@@ -122,14 +118,13 @@ class LoopMeta(object):
     if self.layout_exists():
       self.error = self.check_layout()
       self.read_status()
-      assert self.status, 'Could not read status %s.' % self.status_filename()
+      assert self.status, f'Could not read status {self.status_filename()}.'
+    elif read_only:
+      self.error = f'Non-existent loop layout at {self.root}'
     else:
-      if read_only:
-        self.error = 'Non-existent loop layout at %s' % self.root
-      else:
-        self.status = self.new_status()
-        self.make_layout()
-        self.error = self.check_layout()
+      self.status = self.new_status()
+      self.make_layout()
+      self.error = self.check_layout()
     if self.error is not None:
       logging.error('%s', self.error)
 
@@ -230,11 +225,10 @@ class LoopMeta(object):
     if self.status is None:
       return 'make_layout: Internal status is not set.'
     if self.layout_exists():
-      return 'make_layout: Layout %s exists at %s' % (self.config.name,
-                                                      self.root)
+      return f'make_layout: Layout {self.config.name} exists at {self.root}'
     gfile.MakeDirs(self.root)
     if not gfile.Exists(self.root):
-      return 'Could not create directory %s' % self.root
+      return f'Could not create directory {self.root}'
     io_util.write_text_proto(self.config_filename(), self.config)
     self.write_status()
     gfile.MakeDirs(self.proof_logs_path())

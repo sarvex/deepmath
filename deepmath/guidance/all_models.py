@@ -66,7 +66,7 @@ def model_module(name):
   elif name in PREMISE_MODELS:
     return PREMISE_MODELS[name]
   else:
-    raise ValueError("Unknown model '%s'" % name)
+    raise ValueError(f"Unknown model '{name}'")
 
 
 def make_model(name, mode, hparams, vocab=None):
@@ -102,11 +102,11 @@ def make_model(name, mode, hparams, vocab=None):
       return 'fast', functools.partial(
           module.fast_model, vocab=vocab, hparams=hparams, mode=mode)
     else:
-      raise ValueError("Can't determine kind of model '%s'" % name)
+      raise ValueError(f"Can't determine kind of model '{name}'")
   elif name in PREMISE_MODELS:
     return 'sequence', PREMISE_MODELS[name].Model(tf.get_default_graph())
   else:
-    raise ValueError("Unknown model '%s'" % name)
+    raise ValueError(f"Unknown model '{name}'")
 
 
 def model_hparams(name):

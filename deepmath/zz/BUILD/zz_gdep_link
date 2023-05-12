@@ -37,7 +37,7 @@ def abort(message):
 # library or object file and inspected.
 
 
-gdep_tmpfile = "__zz_gdep__" + str(os.getpid()) + "__.cc";
+gdep_tmpfile = f"__zz_gdep__{os.getpid()}__.cc";
 
 
 def parse_cmdline(args):
@@ -65,12 +65,12 @@ def parse_cmdline(args):
 
     for a in zz_libs:
         for p in lpath:
-            fullname = p + "/lib" + a + ".a";
+            fullname = f"{p}/lib{a}.a";
             if os.path.exists(fullname):
                 zz_objs.append(fullname)
                 break
         else:
-            abort("Couldn't find library: %s" % a)
+            abort(f"Couldn't find library: {a}")
 
     return ("g++ " + " ".join(new_cmdline), zz_objs)
 
@@ -82,9 +82,8 @@ def build_stub(objs, output_filename):
 #    print "GLOBAL DEP COMMAND:", "nm 2>/dev/null " + " ".join(objs)
     with os.popen("nm 2>/dev/null " + " ".join(objs), "r") as f:
         for line in f:
-            m = r.match(line)
-            if m:
-                syms.append(m.group(1))
+            if m := r.match(line):
+                syms.append(m[1])
 
     # Create stub file:
     with open(output_filename, "w") as out:

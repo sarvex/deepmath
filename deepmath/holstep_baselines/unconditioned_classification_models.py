@@ -47,8 +47,7 @@ def cnn_2x(voc_size, max_len, dropout=0.5):
   x = layers.Dropout(dropout)(x)
   prediction = layers.Dense(1, activation='sigmoid')(x)
 
-  model = Model(statement_input, prediction)
-  return model
+  return Model(statement_input, prediction)
 
 
 def cnn_2x_lstm(voc_size, max_len, dropout=0.5):
@@ -76,8 +75,7 @@ def cnn_2x_lstm(voc_size, max_len, dropout=0.5):
   x = layers.Dropout(dropout)(x)
   prediction = layers.Dense(1, activation='sigmoid')(x)
 
-  model = Model(statement_input, prediction)
-  return model
+  return Model(statement_input, prediction)
 
 
 def embedding_logreg(voc_size, max_len, dropout=0.5):
@@ -101,8 +99,7 @@ def embedding_logreg(voc_size, max_len, dropout=0.5):
   x = layers.Dropout(dropout)(x)
   prediction = layers.Dense(1, activation='sigmoid')(x)
 
-  model = Model(statement_input, prediction)
-  return model
+  return Model(statement_input, prediction)
 
 
 # Contains both the model defition function and the type of encoding needed.

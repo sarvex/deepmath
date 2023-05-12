@@ -165,7 +165,7 @@ class Prover(object):
         self.accept_tasks = False
     else:
       tf.logging.warning('Prover does not accept tasks anymore.')
-      error_message = 'Prover stopped accepting tasks due to %s.' % self.error
+      error_message = f'Prover stopped accepting tasks due to {self.error}.'
     proof_log = tree.to_proto()
     if not self.accept_tasks:
       proof_log.rejected = True
@@ -222,14 +222,13 @@ class NoBacktrackProver(Prover):
       if not node.successful_attempts:
         return ('NoBacktrack: No successful tactic applications within '
                 'limit %d' % budget)
-      else:
-        if len(node.successful_attempts) != 1:
-          tf.logging.info('%d successful attempts.',
-                          len(node.successful_attempts))
-          for tac_app in node.successful_attempts:
-            tf.logging.info('attempt: %s', tac_app.tactic)
-        assert len(node.successful_attempts) == 1
-        budget -= len(node.failed_attempts) + 1
+      if len(node.successful_attempts) != 1:
+        tf.logging.info('%d successful attempts.',
+                        len(node.successful_attempts))
+        for tac_app in node.successful_attempts:
+          tf.logging.info('attempt: %s', tac_app.tactic)
+      assert len(node.successful_attempts) == 1
+      budget -= len(node.failed_attempts) + 1
     if not root.closed:
       if self.timed_out():
         return 'Timed out.'
@@ -305,17 +304,19 @@ def get_predictor(options: deephol_pb2.ProverOptions
     return holparam_predictor.TacDependentPredictor(
         str(options.path_model_prefix))
   if model_arch == deephol_pb2.ProverOptions.GNN_GOAL:
-    raise NotImplementedError('GNN_GOAL not implemented for %s' %
-        str(options.path_model_prefix))
-  if (model_arch == deephol_pb2.ProverOptions.HIST_AVG or
-      model_arch == deephol_pb2.ProverOptions.HIST_CONV or
-      model_arch == deephol_pb2.ProverOptions.HIST_ATT):
     raise NotImplementedError(
-        'History-dependent model %s is not supported in the prover.' %
-        model_arch)
+        f'GNN_GOAL not implemented for {str(options.path_model_prefix)}')
+  if model_arch in [
+      deephol_pb2.ProverOptions.HIST_AVG,
+      deephol_pb2.ProverOptions.HIST_CONV,
+      deephol_pb2.ProverOptions.HIST_ATT,
+  ]:
+    raise NotImplementedError(
+        f'History-dependent model {model_arch} is not supported in the prover.'
+    )
 
-  raise AttributeError('Unknown model architecture in prover options: %s' %
-                       model_arch)
+  raise AttributeError(
+      f'Unknown model architecture in prover options: {model_arch}')
 
 
 def cache_embeddings(options: deephol_pb2.ProverOptions):

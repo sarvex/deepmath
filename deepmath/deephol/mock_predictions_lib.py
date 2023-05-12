@@ -37,10 +37,7 @@ class MockPredictionsLib(predictions.Predictions):
     return np.array([[np.sum(emb), 0.0] for emb in goal_embeddings])
 
   def _batch_thm_scores(self, goal_embeddings, thm_embeddings, tactic_id=None):
-    if tactic_id is not None:
-      c = 3.0 * float(tactic_id)
-    else:
-      c = 2.0
+    c = 3.0 * float(tactic_id) if tactic_id is not None else 2.0
     return np.array([
         np.sum(e1) + c * np.sum(e2)
         for (e1, e2) in zip(goal_embeddings, thm_embeddings)

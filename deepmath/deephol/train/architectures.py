@@ -88,9 +88,7 @@ def wavenet_encoding(net, params, mode):
         net,
         rate=(1.0 - params.input_keep_prob),
         noise_shape=(tf.shape(net)[0], tf.shape(net)[1], 1, 1))
-  layer_keep_prob = params.layer_keep_prob
-  if mode != TRAIN:
-    layer_keep_prob = 1.0
+  layer_keep_prob = 1.0 if mode != TRAIN else params.layer_keep_prob
   for _ in range(params.wavenet_blocks):
     net = wavenet.wavenet_block(
         net,

@@ -475,7 +475,7 @@ def get_task_list(prover_tasks_file: Optional[str],
                        'fingerprints.')
     tf.logging.info('Generating task list for fingerprint(s) %s',
                     tasks_by_fingerprint)
-    fingerprints = set([int(fp) for fp in tasks_by_fingerprint.split(',')])
+    fingerprints = {int(fp) for fp in tasks_by_fingerprint.split(',')}
     theorems = []
     for thm in theorem_db.theorems:
       fingerprint = theorem_fingerprint.Fingerprint(thm)

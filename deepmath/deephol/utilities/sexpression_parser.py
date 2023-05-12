@@ -41,10 +41,11 @@ def end_of_word(sexp: Text, start: int) -> Optional[int]:
   if is_end_of_word(sexp, start):
     raise SExpParseError('Beginning and end of word coincide at pos %d.' %
                          start)
-  for pos in range(start, len(sexp) + 1):
-    if is_end_of_word(sexp, pos):
-      return pos
-  return None
+  return next(
+      (pos for pos in range(start,
+                            len(sexp) + 1) if is_end_of_word(sexp, pos)),
+      None,
+  )
 
 
 def end_of_child(sexp: Text, start: int) -> int:
@@ -52,24 +53,23 @@ def end_of_child(sexp: Text, start: int) -> int:
   if not is_start_of_word(sexp, start):
     raise SExpParseError(
         'end_of_child must be called at begginning of a word (pos %d)' % start)
-  if sexp[start] == '(':
-    parenthesis_counter = 0
-    for idx, c in enumerate(sexp[start:]):
-      if c == '(':
-        parenthesis_counter += 1
-      elif c == ')':
-        parenthesis_counter -= 1
-      if parenthesis_counter == 0:
-        return start + idx + 1
-  else:
+  if sexp[start] != '(':
     return end_of_word(sexp, start)  # pytype: disable=bad-return-type
+  parenthesis_counter = 0
+  for idx, c in enumerate(sexp[start:]):
+    if c == '(':
+      parenthesis_counter += 1
+    elif c == ')':
+      parenthesis_counter -= 1
+    if parenthesis_counter == 0:
+      return start + idx + 1
 
 
 def validate_parens(sexp: Text):
   """Counts the opening and closing parantheses."""
   if sexp[0] != '(' or sexp[-1] != ')':
     raise SExpParseError(
-        'SExpressions must start and end with parantheses: %s' % sexp)
+        f'SExpressions must start and end with parantheses: {sexp}')
   parenthesis_counter = 0
   for idx, c in enumerate(sexp):
     if c == '(':
@@ -81,15 +81,12 @@ def validate_parens(sexp: Text):
           'Closing parenthesis before end of expression at pos %d' % idx)
   if parenthesis_counter > 0:
     raise SExpParseError(
-        'Expression not closed; not enough closing parantheses: %s' % sexp)
+        f'Expression not closed; not enough closing parantheses: {sexp}')
 
 
 def is_bare_word(sexp: Text):
   """Base case of SExpressions."""
-  for c in sexp:
-    if c in [' ', '(', ')']:
-      return False
-  return True
+  return all(c not in [' ', '(', ')'] for c in sexp)
 
 
 def children(sexp: Text) -> List[Text]:

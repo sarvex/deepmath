@@ -51,21 +51,16 @@ def get_saved_model_path(training_ckpt_base):
     The path to a saved model protobuff or None if none is found.
   """
   ckpt_dir = os.path.dirname(training_ckpt_base)
-  # If using a checkpoint from the best_exporter, return its saved_model.
   if os.path.basename(ckpt_dir) == 'variables':
     return os.path.join(
         os.path.dirname(ckpt_dir),
         tf.saved_model.constants.SAVED_MODEL_FILENAME_PB)
-  # If using a training checkpoint, still return the eval saved_model.
-  else:
-    saved_models_dir = os.path.join(ckpt_dir, 'export', 'best_exporter')
-    saved_model_paths = tf.gfile.Glob(os.path.join(saved_models_dir, '*'))
-    if saved_model_paths:
-      return os.path.join(saved_model_paths[0],
-                          tf.saved_model.constants.SAVED_MODEL_FILENAME_PB)
-    # Otherwise, there is not eval saved_model.
-    else:
-      return None
+  saved_models_dir = os.path.join(ckpt_dir, 'export', 'best_exporter')
+  return (os.path.join(
+      saved_model_paths[0],
+      tf.saved_model.constants.SAVED_MODEL_FILENAME_PB,
+  ) if (saved_model_paths := tf.gfile.Glob(os.path.join(saved_models_dir,
+                                                        '*'))) else None)
 
 
 class HolparamPredictor(predictions.Predictions):
@@ -82,8 +77,7 @@ class HolparamPredictor(predictions.Predictions):
     self._graph = tf.Graph()
     self._sess = tf.Session(graph=self._graph)
     with self._graph.as_default():
-      saved_model_path = get_saved_model_path(ckpt)
-      if saved_model_path:
+      if saved_model_path := get_saved_model_path(ckpt):
         self._training_meta = False
         tf.logging.info('Importing from metagraph in %s.', saved_model_path)
         saved_model = saved_model_pb2.SavedModel()
@@ -92,7 +86,7 @@ class HolparamPredictor(predictions.Predictions):
           metagraph = saved_model.meta_graphs[0]
       else:
         self._training_meta = True
-        metagraph = ckpt + '.meta'
+        metagraph = f'{ckpt}.meta'
         tf.logging.warn(
             'No exported eval graph found. Using training metagraph %s',
             metagraph)
@@ -119,19 +113,19 @@ class HolparamPredictor(predictions.Predictions):
     # Get the first goal_net collection (second entry may be duplicated to align
     # with negative theorems)
     goals = self._goal_string_for_predictions(goals)
-    embeddings = self._sess.run(
+    return self._sess.run(
         fetches=self._graph.get_collection('goal_net'),
-        feed_dict={self._graph.get_collection('goal_string')[0]: goals})[0]
-    return embeddings
+        feed_dict={self._graph.get_collection('goal_string')[0]: goals},
+    )[0]
 
   def _batch_thm_embedding(self, thms: List[Text]) -> List[THM_EMB_TYPE]:
     """From a list of string theorems, compute and return their embeddings."""
     # The checkpoint should have exactly one value in this collection.
     thms = self._thm_string_for_predictions(thms)
-    embeddings = self._sess.run(
+    return self._sess.run(
         fetches=self._graph.get_collection('thm_net'),
-        feed_dict={self._graph.get_collection('thm_string')[0]: thms})[0]
-    return embeddings
+        feed_dict={self._graph.get_collection('thm_string')[0]: thms},
+    )[0]
 
   def thm_embedding(self, thm: Text) -> THM_EMB_TYPE:
     """Given a theorem as a string, compute and return its embedding."""

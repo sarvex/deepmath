@@ -65,12 +65,11 @@ class DataParser(object):
   def build_vocabulary(self):
     vocabulary = set()
     for fname in self.train_fnames:
-      f = open(fname)
-      for line in f:
-        if line[0] in self.step_markers:
-          for token in self.tokenize_fn(line):
-            vocabulary.add(token)
-      f.close()
+      with open(fname) as f:
+        for line in f:
+          if line[0] in self.step_markers:
+            for token in self.tokenize_fn(line):
+              vocabulary.add(token)
     return vocabulary
 
   def parse_file_list(self, fnames):
@@ -129,11 +128,8 @@ class DataParser(object):
     if self.use_tokens:
       # Text representation of conjecture.
       f.readline()
-      # Tokenization of conjecture.
-      conj = self.tokenize_fn(f.readline())
-    else:
-      # Text representation of conjecture.
-      conj = self.tokenize_fn(f.readline())
+    # Tokenization of conjecture.
+    conj = self.tokenize_fn(f.readline())
     conjecture = {
         'name': name,
         'deps': [],
@@ -195,10 +191,7 @@ class DataParser(object):
     while len(steps) < batch_size:
       name = random.choice(all_conjectures.keys())
       conjecture = all_conjectures[name]
-      if labels[i]:
-        conjecture_steps = conjecture['+']
-      else:
-        conjecture_steps = conjecture['-']
+      conjecture_steps = conjecture['+'] if labels[i] else conjecture['-']
       if not conjecture_steps:
         continue
       step = random.choice(conjecture_steps)
@@ -307,10 +300,7 @@ class DataParser(object):
     while len(steps) < batch_size:
       name = random.choice(all_conjectures.keys())
       conjecture = all_conjectures[name]
-      if labels[i]:
-        conjecture_steps = conjecture['+']
-      else:
-        conjecture_steps = conjecture['-']
+      conjecture_steps = conjecture['+'] if labels[i] else conjecture['-']
       if not conjecture_steps:
         continue
       step = random.choice(conjecture_steps)

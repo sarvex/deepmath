@@ -123,7 +123,7 @@ def train(hparams):
       optimizer = tf.train.RMSPropOptimizer(
           learning_rate=learning_rate, decay=0.9, momentum=0.9, epsilon=1e-5)
     else:
-      raise RuntimeError('Unknown optimizer %s' % hparams.optimizer)
+      raise RuntimeError(f'Unknown optimizer {hparams.optimizer}')
 
     if FLAGS.master not in ('', 'local') and FLAGS.sync_replicas:
       replica_id = tf.constant(FLAGS.task, tf.int32, shape=())
@@ -136,8 +136,7 @@ def train(hparams):
     tf.contrib.deprecated.scalar_summary('lr', learning_rate)
     tf.contrib.deprecated.scalar_summary('loss', m.loss)
     for metric_name, metric_value in m.metrics.items():
-      tf.contrib.deprecated.scalar_summary('metric/' + metric_name,
-                                           metric_value)
+      tf.contrib.deprecated.scalar_summary(f'metric/{metric_name}', metric_value)
 
     grads_and_vars = optimizer.compute_gradients(m.loss, variables)
     if hparams.grad_max_norm > 0:
@@ -221,7 +220,7 @@ def evaluate(hparams):
                                     for v in all_metrics))
   tf.contrib.deprecated.scalar_summary('loss', mean_values[0])
   for i, metric_name in enumerate(m.metrics.iterkeys()):
-    tf.contrib.deprecated.scalar_summary('metric/' + metric_name,
+    tf.contrib.deprecated.scalar_summary(f'metric/{metric_name}',
                                          mean_values[i + 1])
 
   num_evals = (FLAGS.eval_lines - 1) // hparams.batch_size + 1

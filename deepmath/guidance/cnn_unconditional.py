@@ -73,5 +73,4 @@ class Model(model.Model):
     """Compute the logits from conjecture and axiom embeddings."""
     net = axiom_embedding  # Ignore the conjecture
     net = layers.relu(net, self.hparams.classifier_size)
-    logits = tf.squeeze(layers.linear(net, 1), [-1])
-    return logits
+    return tf.squeeze(layers.linear(net, 1), [-1])

@@ -142,7 +142,7 @@ def reporting_pipeline(proof_logs_collection, stats_out: Text,
 
 def file_lines_set(fname):
   with gfile.Open(fname) as f:
-    return set([line.rstrip() for line in f])
+    return {line.rstrip() for line in f}
 
 
 class ReportingPipeline(object):
@@ -168,7 +168,7 @@ class ReportingPipeline(object):
 
   def write_final_stats(self):
     """Log and write final aggregated statistics to file system."""
-    fname = self.aggregate_stat_filename + '-00000-of-00001.pbtxt'
+    fname = f'{self.aggregate_stat_filename}-00000-of-00001.pbtxt'
     aggregate_stat = io_util.load_text_proto(
         fname, deephol_stat_pb2.ProofAggregateStat, 'aggregate statistics')
     if aggregate_stat is None:
@@ -176,13 +176,12 @@ class ReportingPipeline(object):
       return
     tf.logging.info('Stats:\n%s',
                     stats.aggregate_stat_to_string(aggregate_stat))
-    open_goals = file_lines_set(self.open_goals_filename +
-                                '-00000-of-00001.txt')
-    proven_goals = file_lines_set(self.proven_goals_filename +
-                                  '-00000-of-00001.txt')
+    open_goals = file_lines_set(f'{self.open_goals_filename}-00000-of-00001.txt')
+    proven_goals = file_lines_set(
+        f'{self.proven_goals_filename}-00000-of-00001.txt')
     never_proven = open_goals - proven_goals
-    num_open_goals = len(never_proven)
     num_proven_goals = len(proven_goals)
+    num_open_goals = len(never_proven)
     tf.logging.info('Open goals: %d', num_open_goals)
     tf.logging.info('Proved goals: %d', num_proven_goals)
     perc_proven = 100.0 * num_proven_goals / float(num_open_goals +
@@ -195,8 +194,7 @@ class ReportingPipeline(object):
 
     # Write cactus plot
     if aggregate_stat.proof_closed_after_millis:
-      cactus_data = list(aggregate_stat.proof_closed_after_millis)
-      cactus_data.sort()
+      cactus_data = sorted(aggregate_stat.proof_closed_after_millis)
       with gfile.Open(self.cactus_data_filename, 'w') as f:
         f.write('\n'.join(map(str, cactus_data)))
       fig = plot.figure()

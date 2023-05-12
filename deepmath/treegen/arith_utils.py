@@ -23,16 +23,13 @@ def stringify_expr(expr):
   if expr[0] == 'number':
     return expr[1][0]
   elif expr[0] == 'plus':
-    return '(%s + %s)' % (stringify_expr(expr[1]), stringify_expr(expr[2]))
+    return f'({stringify_expr(expr[1])} + {stringify_expr(expr[2])})'
   elif expr[0] == 'minus':
-    return '(%s - %s)' % (stringify_expr(expr[1]), stringify_expr(expr[2]))
+    return f'({stringify_expr(expr[1])} - {stringify_expr(expr[2])})'
 
 
 def none_as_zero(n):
-  if n is None:
-    return 0
-  else:
-    return n
+  return 0 if n is None else n
 
 
 def eval_expr(expr):
@@ -45,4 +42,4 @@ def eval_expr(expr):
   elif expr[0] == 'minus':
     return eval_expr(expr[1]) - eval_expr(expr[2])
   else:
-    raise ValueError('Invalid expression: %s' % repr(expr))
+    raise ValueError(f'Invalid expression: {repr(expr)}')

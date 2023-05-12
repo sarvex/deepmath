@@ -117,10 +117,16 @@ def generate_trees_with_num_terminals(num_terminals, num_subtrees, target):
       all_trees[(n + 1, value)].append(expr)
 
   all_values = set(all_trees.keys())
-  plus_values = set(v for v in all_values
-                    if (num_terminals - v[0], target - v[1]) in all_values)
-  minus_values = set(v for v in all_values
-                     if (num_terminals - v[0], v[1] - target) in all_values)
+  plus_values = {
+      v
+      for v in all_values
+      if (num_terminals - v[0], target - v[1]) in all_values
+  }
+  minus_values = {
+      v
+      for v in all_values
+      if (num_terminals - v[0], v[1] - target) in all_values
+  }
 
   plus_trees = {k: all_trees[k] for k in plus_values}
   minus_trees = {k: all_trees[k] for k in minus_values}
@@ -189,8 +195,8 @@ def generate_trees_with_depth(depth, num_subtrees, target):
   # The values that can go on the left-hand side of a + or -, because
   # at least one tree exists for the value that would be needed on the
   # right-hand side.
-  plus_values = set(v for v in all_values if target - v in all_values)
-  minus_values = set(v for v in all_values if v - target in all_values)
+  plus_values = {v for v in all_values if target - v in all_values}
+  minus_values = {v for v in all_values if v - target in all_values}
 
   short_trees_plus = {k: short_trees_by_value[k] for k in plus_values}
   short_trees_minus = {k: short_trees_by_value[k] for k in minus_values}
@@ -261,10 +267,10 @@ def main(unused_argv):
       generated = convert_tuple_to_cnf(expr)
       generated['positive'] = True
       out.write(json.dumps({'clauses': [generated]}))
-      out.write('\n')
     else:
       out.write(json.dumps(expr))
-      out.write('\n')
+
+    out.write('\n')
 
 
 if __name__ == '__main__':

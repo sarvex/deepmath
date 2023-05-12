@@ -22,18 +22,15 @@ def _process_tactics_and_replacements(tactics_info: deephol_pb2.TacticsInfo,
                                       replacements: deephol_pb2.TacticsInfo
                                      ) -> List[deephol_pb2.Tactic]:
   """Check tactics are in order, have no gap in id, and apply replacements."""
-  bad_ids = [(i, tactic.id)
-             for i, tactic in enumerate(tactics_info.tactics)
-             if tactic.id != i]
-  if bad_ids:
+  if bad_ids := [(i, tactic.id)
+                 for i, tactic in enumerate(tactics_info.tactics)
+                 if tactic.id != i]:
     raise ValueError(' '.join('Tactic #%d should not have id %d.' %
                               (i, tactic_id) for i, tactic_id in bad_ids))
-  bad_replacement_ids = [
-      replacement.id
-      for replacement in replacements.tactics
+  if bad_replacement_ids := [
+      replacement.id for replacement in replacements.tactics
       if replacement.id < 0 or replacement.id >= len(tactics_info.tactics)
-  ]
-  if bad_replacement_ids:
+  ]:
     raise ValueError(' '.join('Replacement tactic id=%d out of bounds.' %
                               tactic_id for tactic_id in bad_replacement_ids))
   for replacement in replacements.tactics:
@@ -127,10 +124,9 @@ def load_theorem_database_from_file(filename: Text
   """Load a theorem database from a text protobuf file."""
   theorem_database = proof_assistant_pb2.TheoremDatabase()
   if filename.endswith('.recordio'):
-    theorem_database = [
-        x for x in recordio_util.read_protos_from_recordio(
-            filename, proof_assistant_pb2.TheoremDatabase)
-    ]
+    theorem_database = list(
+        recordio_util.read_protos_from_recordio(
+            filename, proof_assistant_pb2.TheoremDatabase))
     theorem_database = theorem_database[0]
   else:
     with tf.gfile.Open(filename) as f:
@@ -173,27 +169,21 @@ def read_protos(pattern: Text, proto_class):
   patterns = pattern.split(',')
   if len(patterns) > 1:
     for pattern in patterns:
-      for proto in read_protos(pattern, proto_class):
-        yield proto
+      yield from read_protos(pattern, proto_class)
     return
-  match = re.search('@\\d+$', pattern)
-  if match:
-    for proto in recordio_util.read_protos_from_recordio(pattern, proto_class):
-      yield proto
+  if match := re.search('@\\d+$', pattern):
+    yield from recordio_util.read_protos_from_recordio(pattern, proto_class)
     return
   filenames = tf.io.gfile.glob(pattern)
   if not filenames:
-    raise ValueError('read_protos: No files found matching %s' % pattern)
+    raise ValueError(f'read_protos: No files found matching {pattern}')
   for filename in filenames:
     if filename.endswith('.textpb') or filename.endswith('.pbtxt'):
       yield load_text_proto(filename, proto_class)
     elif filename.endswith('.textpbs') or filename.endswith('.pbtxts'):
-      for proto in load_text_protos(filename, proto_class):
-        yield proto
+      yield from load_text_protos(filename, proto_class)
     else:
-      for proto in recordio_util.read_protos_from_recordio(
-          filename, proto_class):
-        yield proto
+      yield from recordio_util.read_protos_from_recordio(filename, proto_class)
 
 
 def options_reader(options_proto, options_proto_path: Text,

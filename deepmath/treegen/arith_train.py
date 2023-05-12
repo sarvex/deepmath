@@ -81,7 +81,7 @@ def main(unused_argv):
                                             momentum=0.9,
                                             epsilon=1e-5)
     else:
-      raise RuntimeError('Unknown optimizer %s' % FLAGS.optimizer)
+      raise RuntimeError(f'Unknown optimizer {FLAGS.optimizer}')
 
     train_op = optimizer.minimize(m.loss,
                                   global_step=global_step,
@@ -95,7 +95,7 @@ def main(unused_argv):
     sess = supervisor.prepare_or_wait_for_session()
 
     # Run the trainer.
-    for unused_i in xrange(FLAGS.max_steps):
+    for _ in xrange(FLAGS.max_steps):
       batch = [next(train_iterator) for _ in xrange(FLAGS.batch_size)]
 
       _, step, batch_loss, kl_loss = sess.run(

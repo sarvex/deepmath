@@ -74,7 +74,7 @@ def find_irreducible_prefix(brackets):
     if i > 0 and depth == 0:
       return brackets[:i + 1], brackets[i + 1:]
 
-  raise ValueError('unbalanced or empty: %s' % ''.join(brackets))
+  raise ValueError(f"unbalanced or empty: {''.join(brackets)}")
 
 
 def make_well_formed(brackets):

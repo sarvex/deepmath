@@ -163,7 +163,7 @@ def conv1d_stack(sequences, filters, activations, name=None):
     ValueError: If the filters or activations are invalid.
   """
   if not isinstance(sequences, Jagged):
-    raise TypeError('Expected Jagged sequences, got %s' % type(Jagged))
+    raise TypeError(f'Expected Jagged sequences, got {type(Jagged)}')
   if len(filters) != len(activations):
     raise ValueError('Got %d filters != %d activations' %
                      (len(filters), len(activations)))
@@ -177,8 +177,7 @@ def conv1d_stack(sequences, filters, activations, name=None):
     for filt in filters:
       shape = filt.get_shape()
       if shape.ndims != 3 or shape[0] is None or shape[0].value % 2 == 0:
-        raise ValueError('Expected known odd filter width, got shape %s' %
-                         shape)
+        raise ValueError(f'Expected known odd filter width, got shape {shape}')
       width = max(width, shape[0].value)
     between = width // 2  # Rounds down since width is odd
 
@@ -225,7 +224,7 @@ def reduce_max(sequences, name=None):
     Tensor of componentwise maxima.
   """
   if not isinstance(sequences, Jagged):
-    raise TypeError('Expected Jagged sequences, got %s' % type(Jagged))
+    raise TypeError(f'Expected Jagged sequences, got {type(Jagged)}')
   with tf.name_scope(name, 'jagged_reduce_max') as name:
     sizes, flat = unjagged(sequences)
     sizes_sizes, sizes_flat = unjagged(sizes)

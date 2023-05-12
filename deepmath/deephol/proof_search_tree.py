@@ -49,14 +49,13 @@ def _extract_tactic_and_parameters(
   """
   if '[' in tactic_string:
     s = tactic_string.replace(']', '').split('[')
-    assert len(s) == 2, ('Expected single argument %s' % tactic_string)
+    assert len(s) == 2, f'Expected single argument {tactic_string}'
     theorems = []
     for param_string in s[1].split(';'):
-      ps = param_string.strip()
-      if ps:
+      if ps := param_string.strip():
         t = ps.split()
-        assert len(t) == 2, ('Invalid tactic parameter "%s"' % ps)
-        assert t[0] == 'THM', ('Invalid tactic parameter "%s"' % ps)
+        assert len(t) == 2, f'Invalid tactic parameter "{ps}"'
+        assert t[0] == 'THM', f'Invalid tactic parameter "{ps}"'
         theorems.append(proof_assistant_pb2.Theorem(fingerprint=int(t[1])))
     return s[0].strip(), [
         deephol_pb2.TacticParameter(
@@ -66,14 +65,13 @@ def _extract_tactic_and_parameters(
     s = tactic_string.split()
     if len(s) == 1:
       return s[0], []
-    else:
-      assert len(s) == 3
-      assert s[1] == 'THM'
-      return s[0], [
-          deephol_pb2.TacticParameter(
-              parameter_type=deephol_pb2.Tactic.THEOREM,
-              theorems=[proof_assistant_pb2.Theorem(fingerprint=int(s[2]))])
-      ]
+    assert len(s) == 3
+    assert s[1] == 'THM'
+    return s[0], [
+        deephol_pb2.TacticParameter(
+            parameter_type=deephol_pb2.Tactic.THEOREM,
+            theorems=[proof_assistant_pb2.Theorem(fingerprint=int(s[2]))])
+    ]
 
 
 def _theorem_to_string(thm: proof_assistant_pb2.Theorem) -> Text:
@@ -135,16 +133,16 @@ class ProofSearchTree(object):
         # node, unless the node is involved in a loop in which case
         # this node can never be closed along that loop.
         node.remove_ignore()
-        if not (node.ignore or node.closed or node.failed):
-          if self.cur_index is None or self.cur_index > node.index:
-            self.cur_index = node.index
-      return node
+        if not (node.ignore or node.closed or node.failed) and (
+            self.cur_index is None or self.cur_index > node.index):
+          self.cur_index = node.index
     else:
       index = len(self.nodes)
       self.nodes_map[goal_as_string] = index
       node = ProofSearchNode(self, index, goal, parent)
       self.nodes.append(node)
-      return node
+
+    return node
 
   def __init__(self, proof_assistant_obj: proof_assistant.ProofAssistant,
                goal: proof_assistant_pb2.Theorem):
@@ -401,10 +399,7 @@ class ProofSearchNode(object):
     if not self.goal.fingerprint:
       self.goal.fingerprint = theorem_fingerprint.Fingerprint(goal)
     self.index = index
-    if parent is not None:
-      self.parents = [parent]
-    else:
-      self.parents = []
+    self.parents = [parent] if parent is not None else []
     # The list of the successful tactic applications. Note that elements
     # of this list might refer to subtrees that are not or can't be closed
     # successfully.
@@ -499,15 +494,12 @@ class ProofSearchNode(object):
       if not (tac_app.failed or tac_app.parent.ignore):
         remove_ignore = True
         break
-    if remove_ignore:
-      self.ignore = False
+    if not remove_ignore and self.parents:
+      # We are hopless anyways. There is no reason to close to
+      return
     else:
-      if self.parents:
-        # We are hopless anyways. There is no reason to close to
-        return
-      else:
-        # The root should never be set to ignore.
-        self.ignore = False
+      # The root should never be set to ignore.
+      self.ignore = False
     might_close = False
     for tac_app in self.successfull_attempts:
       if tac_app.closed:
@@ -615,10 +607,7 @@ def check_tree_consistency(tree: ProofSearchTree):
       assert tapp.result == deephol_pb2.TacticApplication.SUCCESS
       assert not tapp.error_message, ('Successful attempt with error %s %d %d' %
                                       (tapp.error_message, i, j))
-      all_goals_closed = True
-      for goal in tapp.subgoals:
-        if not goal.closed:
-          all_goals_closed = False
+      all_goals_closed = all(goal.closed for goal in tapp.subgoals)
       if all_goals_closed:
         assert tapp.closed, ('All subgoals closed for %d:%d but tapp is '
                              'is not closed' % (i, j))

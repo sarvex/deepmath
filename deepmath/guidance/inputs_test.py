@@ -65,7 +65,7 @@ class InputsTest(tf.test.TestCase):
           {'7': 32 + 0, 'X': 32 + 1, 'Yx': 32 + 2, 'f': 32 + 3, 'g': 32 + 4})
 
     # One variable
-    size, vocab_to_id = inputs.read_vocab(path + ':one_variable')
+    size, vocab_to_id = inputs.read_vocab(f'{path}:one_variable')
     self.assertEqual(size, 32 + 4)
     check(vocab_to_id,
           {'7': 32 + 0, 'X': 32 + 1, 'Yx': 32 + 1, 'f': 32 + 2, 'g': 32 + 3})
@@ -136,9 +136,7 @@ class InputsTest(tf.test.TestCase):
 
     def random_list(limit, empty, separator, f):
       count = np.random.randint(limit)
-      if not count:
-        return empty
-      return separator.join(f() for _ in range(count))
+      return empty if not count else separator.join(f() for _ in range(count))
 
     def new_name(prefix):
       s = '%s%d' % (prefix, len(vocab))
@@ -160,14 +158,14 @@ class InputsTest(tf.test.TestCase):
           return random_term(term.function.args.add(), depth=depth - 1)
 
         args = random_list(2, '', ',', random_arg)
-        return '%s(%s)' % (name, args) if args else name
+        return f'{name}({args})' if args else name
 
     def random_equation(equation):
       equation.negated = np.random.randint(2)
       s = '~' * equation.negated
       s += random_term(equation.left, depth=2)
       if np.random.randint(2):
-        s += '=' + random_term(equation.right, depth=1)
+        s += f'={random_term(equation.right, depth=1)}'
       return s
 
     def random_clause(clause):
@@ -176,7 +174,7 @@ class InputsTest(tf.test.TestCase):
 
     def random_clauses(clauses):
       return random_list(4, '$true', '&',
-                         lambda: '(%s)' % random_clause(clauses.add()))
+                         lambda: f'({random_clause(clauses.add())})')
 
     np.random.seed(7)
     tf.set_random_seed(7)
@@ -203,7 +201,7 @@ class InputsTest(tf.test.TestCase):
           valid_count = 0
           while valid_count < examples_per_shard:
             key = 'key%d' % len(key_info)
-            full_key = tf.compat.as_bytes('%s:%s' % (shard_path, key))
+            full_key = tf.compat.as_bytes(f'{shard_path}:{key}')
             examples = prover_clause_examples_pb2.ProverClauseExamples()
             examples.key = full_key
             conjecture = random_clauses(examples.cnf.negated_conjecture)
@@ -236,11 +234,7 @@ class InputsTest(tf.test.TestCase):
 
     # Test both train and eval
     for shuffle in False, True:
-      if shuffle:
-        buckets = '16,32,64,128,256,512'
-      else:
-        # Disable bucketing so that we can verify everything is processed
-        buckets = '100000'
+      buckets = '16,32,64,128,256,512' if shuffle else '100000'
       FLAGS.negated_conjecture_buckets = FLAGS.clause_buckets = buckets
       for mode in 'train', 'eval':
         with tf.Graph().as_default() as graph:

@@ -104,7 +104,7 @@ class ParameterPruning(object):
         found_true_positive = True
         index -= 1
         continue
-      assert response.HasField('goals'), 'response: %s' % response
+      assert response.HasField('goals'), f'response: {response}'
       new_subgoals = list(response.goals.goals)
       no_match = False
       if len(new_subgoals) == len(tapp.subgoals):
