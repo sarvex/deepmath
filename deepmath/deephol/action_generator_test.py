@@ -127,7 +127,7 @@ class ActionGeneratorTest(parameterized.TestCase):
                                                   self.model_architecture)
     actions_with_scores = action_gen.step(self.node, self.test_premise_set)
     for action, score in sorted(actions_with_scores, key=lambda x: x.score):
-      tf.logging.info(str(score) + ': ' + str(action))
+      tf.logging.info(f'{str(score)}: {str(action)}')
     self.assertIn('EQ_TAC', [action for action, _ in actions_with_scores])
 
   def test_action_generator_no_parameter_tactic(self):
@@ -159,8 +159,7 @@ class ActionGeneratorTest(parameterized.TestCase):
                                                   self.model_architecture)
     actions_scores = action_gen.step(self.node, self.test_premise_set)
     self.assertEqual(1, len(actions_scores))
-    expected = 'TAC ' + theorem_fingerprint.ToTacticArgument(
-        self.theorem_database.theorems[0])
+    expected = f'TAC {theorem_fingerprint.ToTacticArgument(self.theorem_database.theorems[0])}'
     self.assertEqual(expected, actions_scores[0].string)
 
   @parameterized.named_parameters(('WithEmbeddingStore', True),

@@ -41,9 +41,9 @@ class Convolution1D(keras.layers.Convolution1D):
     # pylint: skip-file
     input_dim = input_shape[2]
     self.W_shape = (self.nb_filter, input_dim, self.filter_length, 1)
-    self.W = self.init(self.W_shape, name='{}_W'.format(self.name))
+    self.W = self.init(self.W_shape, name=f'{self.name}_W')
     if self.bias:
-      self.b = K.zeros((self.nb_filter,), name='{}_b'.format(self.name))
+      self.b = K.zeros((self.nb_filter,), name=f'{self.name}_b')
       self.trainable_weights = [self.W, self.b]
     else:
       self.trainable_weights = [self.W]
@@ -70,9 +70,8 @@ class Convolution1D(keras.layers.Convolution1D):
     if not FLAGS.legacy_conv1d:
       if keras.__version__.startswith('1.'):
         return super(Convolution1D, self).call(x, mask)
-      else:
-        assert mask is None, 'Keras 2 does not support mask'
-        return super(Convolution1D, self).call(x)
+      assert mask is None, 'Keras 2 does not support mask'
+      return super(Convolution1D, self).call(x)
     x = K.expand_dims(x, -1)  # add a dimension of the right
     x = K.permute_dimensions(x, (0, 2, 1, 3))
     output = K.conv2d(x, self.W, strides=self.subsample,

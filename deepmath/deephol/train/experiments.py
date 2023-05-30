@@ -252,15 +252,14 @@ def main(argv):
   hparams.vocab_size = min(hparams.vocab_size, vocab_len)
   tf.logging.info('Vocabulary size is: %d', hparams.vocab_size)
 
-  if (FLAGS.model == 'PAIR_TAC' or
-      FLAGS.model == 'PARAMETERS_CONDITIONED_ON_TAC'):
+  if FLAGS.model in ['PAIR_TAC', 'PARAMETERS_CONDITIONED_ON_TAC']:
     hparams.train_parser = data.pairwise_thm_parser
     hparams.eval_parser = data.pairwise_thm_parser
     hparams.encoder = architectures.dilated_cnn_pairwise_encoder
     hparams.classifier = architectures.tactic_classifier
     hparams.pairwise_scorer = architectures.pairwise_scorer
-    if FLAGS.model == 'PARAMETERS_CONDITIONED_ON_TAC':
-      hparams.parameters_conditioned_on_tac = True
+  if FLAGS.model == 'PARAMETERS_CONDITIONED_ON_TAC':
+    hparams.parameters_conditioned_on_tac = True
 
   params = utils.Params(**hparams.values())
   tf.logging.info('Using params %r', params)

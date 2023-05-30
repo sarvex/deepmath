@@ -54,8 +54,7 @@ def cnn_2x_siamese(voc_size, max_len, dropout=0.5):
   x = layers.Dropout(dropout)(x)
   prediction = layers.Dense(1, activation='sigmoid')(x)
 
-  model = Model([pivot_input, statement_input], prediction)
-  return model
+  return Model([pivot_input, statement_input], prediction)
 
 
 def cnn_2x_lstm_siamese(voc_size, max_len, dropout=0.5):
@@ -91,8 +90,7 @@ def cnn_2x_lstm_siamese(voc_size, max_len, dropout=0.5):
   x = layers.Dropout(dropout)(x)
   prediction = layers.Dense(1, activation='sigmoid')(x)
 
-  model = Model([pivot_input, statement_input], prediction)
-  return model
+  return Model([pivot_input, statement_input], prediction)
 
 
 def embedding_logreg_siamese(voc_size, max_len, dropout=0.5):
@@ -124,8 +122,7 @@ def embedding_logreg_siamese(voc_size, max_len, dropout=0.5):
   x = layers.Dropout(dropout)(concat)
   prediction = layers.Dense(1, activation='sigmoid')(x)
 
-  model = Model([pivot_input, statement_input], prediction)
-  return model
+  return Model([pivot_input, statement_input], prediction)
 
 
 # Contains both the model definition function and the type of encoding needed.

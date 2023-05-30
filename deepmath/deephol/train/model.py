@@ -27,14 +27,14 @@ def model_fn(features, labels, mode, params, config):
     encoding_spec = params.encoder(features, labels, mode, params, config)
     tf.add_to_collection('encoding_net', encoding_spec.enc)
     if encoding_spec.att_key_sim is not None:
-      eval_metric_ops.update(encoding_spec.att_key_sim)
+      eval_metric_ops |= encoding_spec.att_key_sim
 
   predictions = {}
   if params.classifier is not None:
     tf.logging.info('Using classifier')
     with tf.variable_scope('classifier'):
       p, e = params.classifier(encoding_spec, labels, mode, params, config)
-      predictions.update(p)
+      predictions |= p
       eval_metric_ops.update(e)
 
   if params.pairwise_scorer is not None:

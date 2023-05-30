@@ -65,8 +65,8 @@ def set_latest_checkpoint(dirname: str, chkpt: str):
   with gfile.Open(chkpt_file, 'w') as f:
     lines = [
         '%s\n' % l.strip() for l in ([
-            'model_checkpoint_path: "%s"' % chkpt,
-            'all_model_checkpoint_paths: "%s"' % chkpt
+            f'model_checkpoint_path: "{chkpt}"',
+            f'all_model_checkpoint_paths: "{chkpt}"',
         ] + lines)
     ]
     f.writelines(lines)
@@ -134,7 +134,4 @@ class CheckpointMonitor(object):
   def get_checkpoint(self):
     logging.info('Getting checkpoint for %s', self.target_directory)
     chkpt = get_latest_checkpoint(self.target_directory)
-    if chkpt is None:
-      return None
-    else:
-      return os.path.join(self.target_directory, chkpt)
+    return None if chkpt is None else os.path.join(self.target_directory, chkpt)

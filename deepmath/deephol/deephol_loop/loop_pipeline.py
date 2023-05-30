@@ -140,10 +140,10 @@ class LoopPipeline(object):
     # Update prover options to utilize the latest checkpoint present. We also
     # make sure to utilize the embedding store as well.
     prover_options.path_model_prefix = checkpoint
-    prover_options.theorem_embeddings = checkpoint + '.npy'
+    prover_options.theorem_embeddings = f'{checkpoint}.npy'
     assert gfile.Exists(
-        prover_options.theorem_embeddings), ('Missing embeddings file "%s".' %
-                                             prover_options.theorem_embeddings)
+        prover_options.theorem_embeddings
+    ), f'Missing embeddings file "{prover_options.theorem_embeddings}".'
     output_dir = self.loop_meta.make_proof_logs_dir(current_round)
     output_prefix = os.path.join(output_dir, 'logs')
     logging.info('Prover options:\n%s',
@@ -191,13 +191,13 @@ class LoopPipeline(object):
     historical_dir = self.loop_meta.historical_examples_path()
     fresh_dir = self.loop_meta.fresh_examples_path()
     logging.info('Input proof logs file pattern:\n%s', file_pattern)
-    collections = [
-        root | ('ReadAllProofLogs%d' % i) >> recordio.ReadFromRecordIO(
+    if collections := [
+        root
+        | ('ReadAllProofLogs%d' % i) >> recordio.ReadFromRecordIO(
             pattern, coder=beam.coders.ProtoCoder(deephol_pb2.ProofLog))
         for i, pattern in enumerate(file_pattern.split(','))
         if gfile.Glob(pattern)
-    ]
-    if collections:
+    ]:
       logging.info('Historical prooflog collections: %d.', len(collections))
       examples = (
           collections | 'FlattenInputProofLogs' >> beam.Flatten()
@@ -322,26 +322,22 @@ class LoopPipeline(object):
         chkpt = os.path.join(self.loop_meta.checkpoints_path(), new_checkpoint)
         logging.info('Copied checkpoint: "%s"', chkpt)
         # We try to compute embeddings until we succeed.
-        while not gfile.Exists(chkpt + '.npy'):
+        while not gfile.Exists(f'{chkpt}.npy'):
           runner.Runner().run(
               self.embedding_store_pipeline(chkpt)).wait_until_finish()
-          if not gfile.Exists(chkpt + '.npy'):
+          if not gfile.Exists(f'{chkpt}.npy'):
             logging.error(
                 'Could not generate embeddings for the latest '
                 'checkpoint %s.', chkpt)
           else:
             self.checkpoint_monitor.update_latest_checkpoint(new_checkpoint)
             break
-      # If we had a pre-existing checkpoint or we managed to copy over
-      # a new one, then we are succeeded. Let's not check the checkpoint
-      # unless we had none.
       if has_checkpoint or self.checkpoint_monitor.has_checkpoint():
         break
-      else:
-        # We don't have a checkpoint and never had one. Let's wait for
-        # one appear in the training directory.
-        logging.info('Waiting for the first model checkpoint to appear.')
-        time.sleep(10)
+      # We don't have a checkpoint and never had one. Let's wait for
+      # one appear in the training directory.
+      logging.info('Waiting for the first model checkpoint to appear.')
+      time.sleep(10)
     # TODO(szegedy): Cleanup old checkpoints if there are too many of them.
 
   def reporting_pipeline(self, proof_logs):
@@ -384,8 +380,7 @@ class LoopPipeline(object):
 
   def setup_examples(self, initial_examples):
     logging.info('Creating initial examples pipeline')
-    pipeline = self.create_initial_examples_sstables(initial_examples)
-    if pipeline:
+    if pipeline := self.create_initial_examples_sstables(initial_examples):
       logging.info('Generating initial examples sstables...')
       runner.Runner().run(pipeline).wait_until_finish()
     else:

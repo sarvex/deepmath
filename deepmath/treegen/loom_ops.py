@@ -162,10 +162,11 @@ class LinearLoomOp(loom.LoomOp):
       for act_fn, layer_ws, layer_alphas, layer_b in zip(self.activations,
                                                          self.w, self.alpha,
                                                          self.b):
-        components = []
         assert len(prev_layer) == len(layer_ws) == len(layer_alphas)
-        for inp, w, alpha in zip(prev_layer, layer_ws, layer_alphas):
-          components.append(layer_normalization(inp, w, alpha))
+        components = [
+            layer_normalization(inp, w, alpha)
+            for inp, w, alpha in zip(prev_layer, layer_ws, layer_alphas)
+        ]
         prev_layer = [act_fn(tf.add_n(components) + layer_b)]
       merged_output = prev_layer[0]
     else:
@@ -283,9 +284,10 @@ class GatedLinearLoomOp(loom.LoomOp):
                              self.intermediate_count, self.layer_counts,
                              self.layer_counts[1:]):
       if self.layer_norm:
-        components = []
-        for inp, w, alpha in zip(inputs, layer_ws, layer_alphas):
-          components.append(layer_normalization(inp, w, alpha))
+        components = [
+            layer_normalization(inp, w, alpha)
+            for inp, w, alpha in zip(inputs, layer_ws, layer_alphas)
+        ]
         concat_intermediates = tf.add_n(components) + layer_b
       else:
         # concat_inputs shape: bs x (num_inputs * emb_size)
@@ -423,10 +425,13 @@ class EmbeddingLookupLoomOp(loom.LoomOp):
     output_shape = loom.TypeShape(tf.float32, (emb_size,))
 
     options_per_partition = (num_options - 1) // partitions + 1
-    self.embeddings = [tf.get_variable(
-        name + '_emb', [options_per_partition, emb_size],
-        initializer=tf.random_uniform_initializer(-0.05, 0.05))
-                       for _ in xrange(partitions)]
+    self.embeddings = [
+        tf.get_variable(
+            f'{name}_emb',
+            [options_per_partition, emb_size],
+            initializer=tf.random_uniform_initializer(-0.05, 0.05),
+        ) for _ in xrange(partitions)
+    ]
 
     super(EmbeddingLookupLoomOp, self).__init__([input_shape], [output_shape])
 
@@ -498,11 +503,10 @@ class KLDivPosteriorPriorLoomOp(loom.LoomOp):
     # folding.
     kl_div = kl_div_gaussians(mean, stdev, 0, 1)
 
-    if self.reverse:
-      reverse_kl_div = kl_div_gaussians(0, 1, mean, stdev)
-      return kl_div, reverse_kl_div, mean, stdev
-    else:
+    if not self.reverse:
       return kl_div, mean, stdev
+    reverse_kl_div = kl_div_gaussians(0, 1, mean, stdev)
+    return kl_div, reverse_kl_div, mean, stdev
 
 
 class PrintLoomOp(loom.LoomOp):

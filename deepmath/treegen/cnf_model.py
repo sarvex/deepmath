@@ -115,9 +115,8 @@ class LoomInputWithExtras(object):
 
   def supervise_choice(self, type_name, which_op_output, true_label):
     true_label = self.constant(np.int64(true_label))
-    xent_cost, = self.loom_input.op('xent_' + type_name, [
-        which_op_output, true_label
-    ])
+    (xent_cost, ) = self.loom_input.op(f'xent_{type_name}',
+                                       [which_op_output, true_label])
     self.loom_input.add_output(xent_cost)
     self.xent_costs.append(xent_cost)
 
@@ -158,9 +157,7 @@ class SamplingContext(object):
       self.type_shape_counts[output_type_shape] += 1
       results.append(result)
 
-    if was_singleton:
-      return results[0]
-    return results
+    return results[0] if was_singleton else results
 
   def run_and_insert(self, sess, obj):
     """Replace `SamplingPlaceholder`s in `obj` with actual output."""
@@ -181,7 +178,7 @@ class SamplingContext(object):
     elif isinstance(obj, dict):
       iterator = obj.items()
     else:
-      raise TypeError('%s must be list, dict' % repr(obj))
+      raise TypeError(f'{repr(obj)} must be list, dict')
 
     for key, value in iterator:
       if isinstance(value, SamplingPlaceholder):
@@ -247,10 +244,8 @@ class SerializedCNFStateMachine(object):
       self.state = self.FUNC_CALL
     elif self.num_remaining_args:
       self.state = self.FUNC_ARG
-    elif not self.num_remaining_args:
-      self.state = self.PRED_END
     else:
-      raise ValueError('%s caused transition to invalid state.' % token)
+      self.state = self.PRED_END
 
 
 class CNFSequenceModel(object):
@@ -304,13 +299,13 @@ class CNFSequenceModel(object):
     self.func_arities = func_arities
     # Used while sampling if we exceeded the token limit but have
     # functions/predicates without enough arguments.
-    self.filler_number = 'NUM_' + numbers[-1]
+    self.filler_number = f'NUM_{numbers[-1]}'
 
     # TODO(ricshin): Handle functions and predicate separately.
     special = ['<s>', '</s>', '~', '|']
-    all_names = (special + ['FUN_' + name for name, _ in func_names_and_types] +
-                 ['VAR_' + name for name in var_names] +
-                 ['NUM_' + num for num in numbers])
+    all_names = (special + [f'FUN_{name}' for name, _ in func_names_and_types] +
+                 [f'VAR_{name}'
+                  for name in var_names]) + [f'NUM_{num}' for num in numbers]
 
     self.name_to_id = dict(zip(all_names, itertools.count(0)))
     self.id_to_name = dict(zip(itertools.count(0), all_names))
@@ -528,7 +523,7 @@ class CNFSequenceModel(object):
       func_name = function['pred']
       params = function['params']
 
-    return ['FUN_' + func_name] + nest.flatten(
+    return [f'FUN_{func_name}'] + nest.flatten(
         [cls.serialize_term(param) for param in params])
 
   @classmethod
@@ -573,14 +568,10 @@ class CNFSequenceModel(object):
     if not serialized:
       raise ValueError('Ran out of tokens prematurely.')
 
-    if partial is None:
-      function = {}
-    else:
-      function = partial
-
+    function = {} if partial is None else partial
     func_name = serialized.popleft()
     if not func_name.startswith('FUN_'):
-      raise ValueError('Expected function name, got %s' % func_name)
+      raise ValueError(f'Expected function name, got {func_name}')
     func_name = func_name[4:]
 
     is_predicate = self.func_name_to_is_predicate[func_name]
@@ -596,8 +587,7 @@ class CNFSequenceModel(object):
       function[u'func'] = func_name
       function[u'params'] = params
 
-    for _ in xrange(num_arguments):
-      params.append(self.unserialize_term(serialized))
+    params.extend(self.unserialize_term(serialized) for _ in xrange(num_arguments))
     return function
 
   def unserialize_term(self, serialized):
@@ -613,7 +603,7 @@ class CNFSequenceModel(object):
     elif leftmost.startswith('NUM_'):
       return {u'number': serialized.popleft()[4:]}
     else:
-      raise ValueError('Invalid token for unserialize_term: %s' % leftmost)
+      raise ValueError(f'Invalid token for unserialize_term: {leftmost}')
 
   def sample(self, sess, temperature=1.0):
     """Sample a CNF statement from the trained model."""
@@ -662,9 +652,8 @@ class CNFSequenceModel(object):
       state_machine.add_token(next_name)
 
     # Fix malformed sequence, if necessary
-    for _ in xrange(sum(state_machine.num_remaining_args)):
-      tokens.append(self.filler_number)
-
+    tokens.extend(self.filler_number
+                  for _ in xrange(sum(state_machine.num_remaining_args)))
     return self.unserialize_formula(collections.deque(tokens))
 
 
@@ -766,15 +755,15 @@ class CNFTreeModel(object):
           'sigmoid': tf.sigmoid
       }[hparams.act_fn]
     except KeyError:
-      raise ValueError('Invalid act_fn: %s' % act_fn)
+      raise ValueError(f'Invalid act_fn: {act_fn}')
 
     func_names_and_types, func_arities, var_names, numbers = (
         clause_metadata['func_names'], clause_metadata['func_arities'],
         clause_metadata['var_names'], clause_metadata['numbers'])
 
     with framework.arg_scope(
-        [framework.variable],
-        regularizer=layers.l2_regularizer(hparams.l2_weight)):
+          [framework.variable],
+          regularizer=layers.l2_regularizer(hparams.l2_weight)):
       named_tensors = {}
       if hparams.objective in ('naive_lb', 'mc_lb', 'vae', 'vae_mix', 'iwae'):
         named_tensors['root_emb'] = tf.random_normal([emb_size])
@@ -785,7 +774,7 @@ class CNFTreeModel(object):
       elif hparams.objective == 'zero_z':
         named_tensors['root_emb'] = tf.zeros([emb_size])
       else:
-        raise ValueError('Invalid objective: %s' % hparams.objective)
+        raise ValueError(f'Invalid objective: {hparams.objective}')
       named_tensors['zero_emb'] = tf.zeros([emb_size])
       named_tensors['log_mc_samples'] = tf.constant(
           np.log(hparams.mc_samples), dtype=tf.float32)
@@ -891,7 +880,7 @@ class CNFTreeModel(object):
       def choice(name, count):
         named_ops['xent_' +
                   name] = loom_ops.SparseSoftmaxCrossEntropyLossLoomOp(count)
-        named_ops['sample_' + name] = loom_ops.MultinomialLoomOp(count)
+        named_ops[f'sample_{name}'] = loom_ops.MultinomialLoomOp(count)
 
       choice('stop', 2)
       choice('sign', 2)
@@ -1416,7 +1405,7 @@ class CNFTreeModel(object):
                                                   lambda arr: bool(arr))}
     function = self.sample_function(sess, function_emb, loom_input,
                                     sampling_ctx, 1, context)
-    literal.update(function)
+    literal |= function
 
     return sampling_ctx.run_and_insert(sess, literal)
 

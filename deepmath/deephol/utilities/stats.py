@@ -72,10 +72,7 @@ def tactic_application_stats(stat: deephol_stat_pb2.TacticApplicationStat,
   """Updates TacticApplicationStat by a single TacticApplication."""
   stat.time_spent_per_tapp_result[deephol_pb2.TacticApplication.Result.Name(
       tapp.result)] += tapp.time_spent
-  if tapp.tactic:
-    tactic = tapp.tactic.split()[0]
-  else:
-    tactic = 'not_available'
+  tactic = tapp.tactic.split()[0] if tapp.tactic else 'not_available'
   stat.time_spent_per_tactic[tactic] += tapp.time_spent
   stat.total_tactic_applications_per_tactic[tactic] += 1
 
@@ -285,9 +282,7 @@ def aggregate_stats(stats: List[deephol_stat_pb2.ProofStat]
 
 def stat_to_string(stat: deephol_stat_pb2.ProofStat) -> Text:
   """Return a short summary of the stat."""
-  status = 'failed'
-  if stat.num_theorems_proved:
-    status = 'proved'
+  status = 'proved' if stat.num_theorems_proved else 'failed'
   return '%.2f secs spent in %d/%d/%d nodes : %s' % (
       stat.time_spent_milliseconds / 1000.0, len(stat.reduced_node_indices),
       len(stat.closed_node_indices), stat.num_nodes, status)
@@ -330,9 +325,8 @@ def log_scale_histograms_to_string(
 def histograms_to_string(maps_map, scale=1) -> Text:
   """Turns a list of names protobuf maps into a nice table."""
   column_size = 12
-  all_keys = list(
+  all_keys = sorted(
       set(itertools.chain.from_iterable([m.keys() for _, m in maps_map])))
-  all_keys.sort()
   key_lengths = list(map(len, map(str, all_keys)))
   key_lengths.append(8)
   longest_key = max(key_lengths) + 1
@@ -341,15 +335,12 @@ def histograms_to_string(maps_map, scale=1) -> Text:
   for key in all_keys:
 
     def nice_string(v):
-      if isinstance(v, float):
-        res = '%.3f' % v
-      else:
-        res = str(v)
+      res = '%.3f' % v if isinstance(v, float) else str(v)
       return res.rjust(column_size)
 
     entries = [nice_string(m[key] * scale) for _, m in maps_map]
     lines.append(str(key).ljust(longest_key) + ''.join(entries))
-  return str('\n'.join(lines))
+  return '\n'.join(lines)
 
 
 def average_by(time, applications):

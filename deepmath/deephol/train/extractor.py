@@ -92,25 +92,24 @@ class Extractor(object):
           [goal_tiling_size * self.params.batch_size])
 
       # Tokenize the thm parameter (assumes single thm in list)
-      if 'thms' in features:
-        if self.add_negative:
-          hard_negatives = features['thms_hard_negatives']
-          hard_negatives = tf.reshape(tf.transpose(hard_negatives), [-1])
+      if 'thms' in features and self.add_negative:
+        hard_negatives = features['thms_hard_negatives']
+        hard_negatives = tf.reshape(tf.transpose(hard_negatives), [-1])
 
-          def hard_or_random_picker(hard_random_pair):
-            hard, random = hard_random_pair
-            hard_not_present = tf.equal(hard, tf.constant('<NULL>'))
-            return tf.cond(hard_not_present, lambda: random, lambda: hard)
+        def hard_or_random_picker(hard_random_pair):
+          hard, random = hard_random_pair
+          hard_not_present = tf.equal(hard, tf.constant('<NULL>'))
+          return tf.cond(hard_not_present, lambda: random, lambda: hard)
 
-          neg_thms = tf.map_fn(
-              hard_or_random_picker, (hard_negatives, self.random_negatives),
-              dtype=tf.string)
-          labels['thm_label'] = tf.concat([
-              tf.ones(tf.shape(features['thms'])[0], dtype=tf.int32),
-              tf.zeros(tf.shape(neg_thms)[0], dtype=tf.int32)
-          ],
-                                          axis=0)
-          features['thms'] = tf.concat([features['thms'], neg_thms], axis=0)
+        neg_thms = tf.map_fn(
+            hard_or_random_picker, (hard_negatives, self.random_negatives),
+            dtype=tf.string)
+        labels['thm_label'] = tf.concat([
+            tf.ones(tf.shape(features['thms'])[0], dtype=tf.int32),
+            tf.zeros(tf.shape(neg_thms)[0], dtype=tf.int32)
+        ],
+                                        axis=0)
+        features['thms'] = tf.concat([features['thms'], neg_thms], axis=0)
 
       if labels is not None and 'thms' in labels:
         labels['thm_ids'] = self.tokenize(labels['thms'], self.thms_table)

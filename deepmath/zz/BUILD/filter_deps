@@ -13,8 +13,7 @@ def systemHeader(filename):
     if re.match(r'/usr/local/google/home/.*', filename): return False
     if re.match(r'/usr/.*', filename): return True
     if re.match(r'/grid/common/.*/gcc.*/include/.*', filename): return True
-    if re.match(r'/Applications/.*/XCode.app/.*', filename): return True
-    return False
+    return bool(re.match(r'/Applications/.*/XCode.app/.*', filename))
 
 
 def emitDeps(target, deps):
@@ -30,12 +29,12 @@ if len(args) > 0:
     pfx = args[0]
     args = args[1:]
     if pfx != "" and pfx[-1:] != "/":
-        pfx = pfx + "/"
+        pfx = f"{pfx}/"
 
 deps = []
 for line in sys.stdin:
     words = line.split()
-    if words[0][-3:] == ".o:" or words[0][-3:] == ".a:":
+    if words[0][-3:] in [".o:", ".a:"]:
         if deps != []:
             emitDeps(pfx + head, deps)
             deps = []

@@ -72,10 +72,7 @@ class EmbeddingStoreTest(tf.test.TestCase, parameterized.TestCase):
     store = self.store
     store.compute_embeddings_for_thms_from_db(self.thm_db)
     goal_embedding = np.array([1.0, 2.0])
-    if theorem_index is not None:
-      test_theorem_index = theorem_index
-    else:
-      test_theorem_index = len(self.thms)
+    test_theorem_index = len(self.thms) if theorem_index is None else theorem_index
     scores = store.get_thm_scores_for_preceding_thms(goal_embedding,
                                                      theorem_index)
     expected_thm_scores = np.array([

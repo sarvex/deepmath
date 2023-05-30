@@ -131,9 +131,7 @@ def binary_op(tag, op, layers):
 
 def random_list(limit, empty, separator, f):
   count = np.random.randint(limit)
-  if not count:
-    return empty
-  return separator.join(f() for _ in range(count))
+  return empty if not count else separator.join(f() for _ in range(count))
 
 
 def random_name(prefix):

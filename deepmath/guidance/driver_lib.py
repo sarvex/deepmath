@@ -41,7 +41,7 @@ def parse_hparams(hparam_str):
       embedding_size=256,  # Word embedding dimension
   )
   hparams = model_utils.merge_hparams(train.default_hparams(),
-                                      all_models.model_hparams(m.group(1)),
+                                      all_models.model_hparams(m[1]),
                                       input_hparams)
   hparams.parse(hparam_str)
   return hparams
@@ -169,9 +169,9 @@ def with_name(value, name):
     raise TypeError('Expected Tensor or Operation, got %r' % type(value))
   if value.name != name + suffix:
     value = nop(value, name=name)
-    if value.name != name + suffix:
-      raise ValueError('Tried to ensure name %r, but got %r' %
-                       (name + suffix, value.name))
+  if value.name != name + suffix:
+    raise ValueError('Tried to ensure name %r, but got %r' %
+                     (name + suffix, value.name))
   return value
 
 

@@ -119,7 +119,7 @@ def general_train(make_loss, hparams, make_hooks=None):
   keras.backend.manual_variable_initialization(True)
 
   with tf.device(tf.train.replica_device_setter(FLAGS.ps_tasks,
-                                                merge_devices=True)):
+                                                  merge_devices=True)):
     # Set the caching device to prevent hangs during distributed training
     vs = tf.get_variable_scope()
     if vs.caching_device is None:
@@ -161,7 +161,7 @@ def general_train(make_loss, hparams, make_hooks=None):
           learning_rate=learning_rate, decay=0.9, momentum=0.9,
           epsilon=1e-5)
     else:
-      raise ValueError('Unknown optimizer %s' % hparams.optimizer)
+      raise ValueError(f'Unknown optimizer {hparams.optimizer}')
 
     is_chief = FLAGS.task == 0
     chief_only_hooks = []

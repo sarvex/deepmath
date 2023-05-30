@@ -57,7 +57,7 @@ class TrainTest(tf.test.TestCase):
 
       # Check eval
       event_path, = glob.glob(os.path.join(tmp, 'eval/events*'))
-      tag = 'eval %saccuracy' % ('joint ' * (hparams.loss == 'joint'))
+      tag = f"eval {'joint ' * (hparams.loss == 'joint')}accuracy"
       accuracy, = [value.simple_value
                    for event in tf.train.summary_iterator(event_path)
                    for value in event.summary.value
@@ -101,9 +101,7 @@ class TrainTest(tf.test.TestCase):
                     'loss=joint', joint_safe=True)
 
   def testTrainAverage(self):
-    # TODO(geoffreyi): Enable once Polyak averaging works
-    if 0:  # pylint: disable=using-constant-test
-      self.train_test(None, 'use_averages=true')
+    pass
 
 
 if __name__ == '__main__':

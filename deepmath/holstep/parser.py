@@ -48,15 +48,12 @@ def _finalize(t):
       # Don't uncurry binders or operators
       if t[0][0] not in _BINDERS_AND_OPERATORS:
         t = t[0] + t[1:]
-    # Split out the variables for the quantifiers.
-    else:
-      match = _BINDER_RE.match(t[0])
-      if match:
-        binder = match.group(1)
-        if binder == 'lambda':
-          binder = '\\'
-        variable = match.group(2)
-        t = (binder, variable, t[1])
+    elif match := _BINDER_RE.match(t[0]):
+      binder = match.group(1)
+      if binder == 'lambda':
+        binder = '\\'
+      variable = match.group(2)
+      t = (binder, variable, t[1])
   elif len(t) > 3 and t[-2] == '|-':
     # Handle turnstiles with more than one comma separated assumption
     assert t[1:-2:2] == (',',) * ((len(t) - 3) // 2)
@@ -103,7 +100,7 @@ def parse_term(term):
 def show_sexp(e):
   """Convert an S-expr to a string."""
   if isinstance(e, tuple):
-    return '(%s)' % ' '.join(show_sexp(s) for s in e)
+    return f"({' '.join(show_sexp(s) for s in e)})"
   elif isinstance(e, str):
     return e
   else:

@@ -27,8 +27,8 @@ flags.DEFINE_bool('cnf_allow_toplevel_func', True,
 
 
 def raise_error_with_keys(name, dic):
-  raise ValueError('Invalid %s with keys: %s' %
-                   (name, ', '.join(str(k) for k in dic.keys())))
+  raise ValueError(
+      f"Invalid {name} with keys: {', '.join(str(k) for k in dic.keys())}")
 
 
 def validate_cnf(cnf):
@@ -45,18 +45,14 @@ def validate_literal(literal):
   if 'positive' not in literal:
     raise ValueError('Invalid literal: lacks "positive"')
 
-  if not FLAGS.cnf_allow_toplevel_func:
-    if sum(
-        ['equal' in literal, 'pred' in literal and 'params' in literal]) != 1:
-      raise_error_with_keys('literal', literal)
+  if (not FLAGS.cnf_allow_toplevel_func and sum(
+      ['equal' in literal, 'pred' in literal and 'params' in literal]) != 1):
+    raise_error_with_keys('literal', literal)
 
   if 'equal' in literal:
     params = literal['equal']
   elif 'func' in literal or 'pred' in literal:
     params = literal['params']
-  elif 'pred' in literal:
-    params = literal['params']
-
   for param in params:
     validate_term(param)
 
@@ -86,10 +82,7 @@ def unparse_literal(literal):
                      literal['positive'] else '!=', unparse_term(terms[1])])
 
   unparsed_func = unparse_function(literal)
-  if literal['positive']:
-    return unparsed_func
-  else:
-    return '~' + unparsed_func
+  return unparsed_func if literal['positive'] else f'~{unparsed_func}'
 
 
 def unparse_function(function):
@@ -98,10 +91,8 @@ def unparse_function(function):
     return 'ERROR(' + function['error'] + ')'
 
   func_name = function['func'] if 'func' in function else function['pred']
-  params = function['params']
-
   result = [func_name]
-  if params:
+  if params := function['params']:
     result += ['(', ', '.join(unparse_term(param) for param in params), ')']
   return ''.join(result)
 
@@ -121,4 +112,4 @@ def unparse_term(term):
   elif 'var' in term:
     return term['var']
 
-  raise ValueError('Invalid term: ' + repr(term))
+  raise ValueError(f'Invalid term: {repr(term)}')

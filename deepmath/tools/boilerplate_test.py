@@ -75,8 +75,7 @@ def main():
   # Make sure BASE_DIR ends with deepmath.  If it doesn't, we probably
   # computed the wrong directory.
   if os.path.split(BASE_DIR)[-1] != 'deepmath':
-    raise AssertionError("BASE_DIR = '%s' doesn't end with deepmath" %
-                         BASE_DIR)
+    raise AssertionError(f"BASE_DIR = '{BASE_DIR}' doesn't end with deepmath")
 
   # Scan all files for errors
   errors = []
@@ -98,24 +97,19 @@ def main():
 
         # Check for licenses
         if not LICENSE_RE[ext].match(contents):
-          errors.append('%s: missing license' % short)
+          errors.append(f'{short}: missing license')
 
         if ext == '.py':
           # Check for futures
           futures = frozenset(FUTURE_RE.findall(contents))
-          missing = REQUIRED_FUTURES - futures
-          if missing:
-            errors.append('%s: missing futures [%s]' %
-                          (short, ', '.join(missing)))
+          if missing := REQUIRED_FUTURES - futures:
+            errors.append(f"{short}: missing futures [{', '.join(missing)}]")
 
           # Check for bad things
           if short != 'tools/boilerplate_test.py':
             bads = {'FLAGS.test_tmpdir': 'self.get_temp_dir()'}
-            for bad, good in bads.items():
-              if bad in contents:
-                errors.append('%s: %s is bad, use %s instead' %
-                              (short, bad, good))
-
+            errors.extend(f'{short}: {bad} is bad, use {good} instead'
+                          for bad, good in bads.items() if bad in contents)
   # Report errors
   print()
   for error in errors:

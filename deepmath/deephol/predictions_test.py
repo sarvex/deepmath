@@ -13,10 +13,7 @@ MOCK_PREDICTOR = mock_predictions_lib.MockPredictionsLib
 
 
 def double(x):
-  if x is None:
-    return x
-  else:
-    return 2 * x
+  return x if x is None else 2 * x
 
 
 class PredictionsTest(tf.test.TestCase, parameterized.TestCase):

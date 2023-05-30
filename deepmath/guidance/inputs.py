@@ -113,16 +113,14 @@ def read_vocab(path):
     valid_options = ('one_variable',)
     for f in options:
       if f not in valid_options:
-        raise ValueError("Invalid vocabulary flag '%s'" % f)
+        raise ValueError(f"Invalid vocabulary flag '{f}'")
   else:
     options = ()
   one_variable = 'one_variable' in options
 
   # Generate vocabulary
   symbols = tuple(' *~|&(),=') + ('$false', '$true')
-  vocab_to_id = {}
-  for i, s in enumerate(symbols):
-    vocab_to_id[s] = i
+  vocab_to_id = {s: i for i, s in enumerate(symbols)}
   next_id = 32
   variable_id = None
   for s in tf.gfile.Open(path):

@@ -96,11 +96,17 @@ class PredictionsAbstractBaseTest(
     thm_embs = predictor.batch_thm_embedding(self.formulas)
 
     self.assertLen(
-        set([tuple(emb) for emb in goal_embs]), len(self.goal_formulas),
-        'Unique goals should be uniquely embedded.')
+        {tuple(emb)
+         for emb in goal_embs},
+        len(self.goal_formulas),
+        'Unique goals should be uniquely embedded.',
+    )
     self.assertLen(
-        set([tuple(emb) for emb in thm_embs]), len(self.formulas),
-        'Unique theorems should be uniquely embedded.')
+        {tuple(emb)
+         for emb in thm_embs},
+        len(self.formulas),
+        'Unique theorems should be uniquely embedded.',
+    )
 
   def _assert_all_close_batch(self, batch1, batch2, message):
     for v1, v2 in zip(batch1, batch2):

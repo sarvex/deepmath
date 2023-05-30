@@ -112,23 +112,19 @@ def _compute_parameter_string(types, pass_no_arguments: bool,
   if not thm_ranked:
     raise ValueError('Theorem parameters are required.')
   if types == [deephol_pb2.Tactic.THEOREM]:
-    return [' %s' % thm_ranked[0][1]]
+    return [f' {thm_ranked[0][1]}']
 
   if types == [deephol_pb2.Tactic.THEOREM_LIST]:
     ret = []
-    if not thm_ranked:
-      ret.append(' [ ]')
-      return ret
-
     # If predictor also suggests passing no arguments to the tactic, then
     # additionally return an empty list as a parameter string.
     if pass_no_arguments:
       ret.append(' [ ]')
 
     best_thms = [t for _, t in thm_ranked]
-    ret.append(' [ %s ]' % ' ; '.join(best_thms))
+    ret.append(f" [ {' ; '.join(best_thms)} ]")
     return ret
-  raise ValueError('Unsupported tactic parameter types %s' % str(types))
+  raise ValueError(f'Unsupported tactic parameter types {str(types)}')
 
 
 class ActionGenerator(object):
@@ -178,9 +174,7 @@ class ActionGenerator(object):
       return self.embedding_store.get_thm_scores_for_preceding_thms(
           proof_state_enc, thm_number, tactic_id)
 
-    relevant_thms = self.theorem_database.theorems[:thm_number]
-
-    if relevant_thms:
+    if relevant_thms := self.theorem_database.theorems[:thm_number]:
       # TODO(smloos): update predictions API to use proof_assistant_pb2.Theorem
       thms_emb = self.predictor.batch_thm_embedding([
           normalization_lib.normalize(thm).conclusion for thm in relevant_thms
@@ -343,11 +337,10 @@ class ActionGenerator(object):
       try:
         tactic_params = _compute_parameter_string(
             list(tactic.parameter_types), pass_no_arguments, thm_ranked)
-        for params_str in tactic_params:
-          ret.append(
-              Suggestion(
-                  string=tactic_str + params_str,
-                  score=tactic_scores[tactic_id]))
+        ret.extend(
+            Suggestion(string=tactic_str + params_str,
+                       score=tactic_scores[tactic_id])
+            for params_str in tactic_params)
       except ValueError as e:
         tf.logging.warning('Failed to compute parameters for tactic %s: %s',
                            tactic.name, str(e))

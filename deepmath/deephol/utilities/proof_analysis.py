@@ -75,14 +75,14 @@ class Node(object):
         closing, of type List[Node].
     """
     for i, proof in enumerate(self.node.proofs):
-      if proof.result == deephol_pb2.TacticApplication.SUCCESS:
-        if not proof.subgoals:
-          assert proof.closed, str(proof)
-          self.true_proof = i
-          self.closed = True
-          closed_nodes.append(self)
-          self.proofs[i] = []
-          return
+      if (proof.result == deephol_pb2.TacticApplication.SUCCESS
+          and not proof.subgoals):
+        assert proof.closed, str(proof)
+        self.true_proof = i
+        self.closed = True
+        closed_nodes.append(self)
+        self.proofs[i] = []
+        return
     for i, proof in enumerate(self.node.proofs):
       if proof.closed:
         proof = [goal_to_node(subgoal) for subgoal in proof.subgoals]

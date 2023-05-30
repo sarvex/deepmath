@@ -40,14 +40,13 @@ def tactic_predictions(tactic_logits, labels, unused_mode, params):
   log_prob_tactic = tf.losses.sparse_softmax_cross_entropy(
       logits=tactic_logits, labels=tac_id, weights=weights)
 
-  predictions = {
+  return {
       'log_prob_tactic': log_prob_tactic,
       'tactic_accuracy': tactic_accuracy,
       'target_tactics': tac_id,
       'predicted_tactics': choices_tactic,
       'tactic_topk_accuracy': tactic_topk_accuracy,
   }
-  return predictions
 
 
 def add_tactic_losses(predictions, labels, params):
@@ -61,7 +60,7 @@ def add_tactic_losses(predictions, labels, params):
   for key in scalars:
     tf.summary.scalar(key, predictions[key])
     # Add eval metric ops for each scalar.
-    scoped_key = '%s/%s' % (tf.get_variable_scope().name, key)
+    scoped_key = f'{tf.get_variable_scope().name}/{key}'
     eval_metric_ops[scoped_key] = tf.metrics.mean(predictions[key])
 
   # Get the value of the predicted and target tactics
@@ -104,7 +103,7 @@ def pairwise_predictions(logits: tf.Tensor, labels: Dict[Text, tf.Tensor],
   pos_copies = tf.tile(pos_logits, [params.ratio_neg_examples])
   relative_pred = tf.reduce_mean(
       tf.to_float(tf.greater(pos_copies, neg_logits)))
-  predictions = {
+  return {
       'pos_logits': tf.reduce_mean(pos_logits),
       'neg_logits': tf.reduce_mean(neg_logits),
       'pos_pred': tf.reduce_mean(pos_pred),
@@ -112,10 +111,9 @@ def pairwise_predictions(logits: tf.Tensor, labels: Dict[Text, tf.Tensor],
       'relative_pred': relative_pred,
       'pos_accuracy': pos_acc,
       'neg_accuracy': neg_acc,
-      'accuracy_50_50': (pos_acc + neg_acc) / 2.,
+      'accuracy_50_50': (pos_acc + neg_acc) / 2.0,
       'log_prob_pairwise': ce_loss,
   }
-  return predictions
 
 
 def add_pairwise_losses(predictions: Dict[Text, tf.Tensor],
@@ -127,7 +125,7 @@ def add_pairwise_losses(predictions: Dict[Text, tf.Tensor],
   for key in predictions:
     tf.summary.scalar(key, predictions[key])
     # Add eval metric ops for each scalar.
-    scoped_key = tf.get_variable_scope().name + '/' + key
+    scoped_key = f'{tf.get_variable_scope().name}/{key}'
     eval_metric_ops[scoped_key] = tf.metrics.mean(predictions[key])
 
   return eval_metric_ops

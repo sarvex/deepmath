@@ -35,10 +35,10 @@ def tfrecord_dataset_with_source(files, source):
 
 def get_train_dataset(params):
   path = os.path.join(params.dataset_dir, 'train', 'train*')
-  files = tf.gfile.Glob(path)
-  if not files:
-    raise ValueError('No training files found in %s' % path)
-  return tfrecord_dataset_with_source(files, SOURCE_DATASETDIR)
+  if files := tf.gfile.Glob(path):
+    return tfrecord_dataset_with_source(files, SOURCE_DATASETDIR)
+  else:
+    raise ValueError(f'No training files found in {path}')
 
 
 def get_holparam_dataset(mode, params):
@@ -67,11 +67,11 @@ def get_holparam_dataset(mode, params):
 
     tf.logging.info('EVAL files: %s.', ' '.join([str(f) for f in files]))
     if not files:
-      raise ValueError('No eval files found in %s' % path)
+      raise ValueError(f'No eval files found in {path}')
 
     return tfrecord_dataset_with_source(files, SOURCE_DATASETDIR)
 
-  raise ValueError('Unrecognized mode %s' % mode)
+  raise ValueError(f'Unrecognized mode {mode}')
 
 
 def generic_parser(serialized_example, feature_list, label_list):
@@ -135,9 +135,8 @@ def _shuffle_and_truncate_hard_negatives(thms_hard_negatives, params):
       tf.size(shuffled_hard_negatives), params.ratio_max_hard_negative_examples)
   truncated_hard_negatives = shuffled_hard_negatives[:slice_size]
   padding_size = params.ratio_neg_examples - slice_size
-  padded_hard_negatives = tf.pad(
-      truncated_hard_negatives, [[0, padding_size]], constant_values='<NULL>')
-  return padded_hard_negatives
+  return tf.pad(truncated_hard_negatives, [[0, padding_size]],
+                constant_values='<NULL>')
 
 
 def pairwise_thm_parser(serialized_example, source, params):

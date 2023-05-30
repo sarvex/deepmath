@@ -160,7 +160,7 @@ def process_prover_flags():
     if FLAGS.libraries == 'all':
       library_tags = set()
     else:
-      library_tags = set([tag for tag in FLAGS.libraries.split(',')])
+      library_tags = set(list(FLAGS.libraries.split(',')))
   else:
     library_tags = set(prover_options.library_tags)
   if not library_tags:

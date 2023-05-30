@@ -21,11 +21,11 @@ class ProofFailedError(Exception):
 
 
 def put_in_quotes(s: Text):
-  return '"%s"' % s
+  return f'"{s}"'
 
 
 def _tactic_string_to_ocaml(tactic_string: Text) -> Text:
-  return 'Parse_tactic.parse ' + put_in_quotes(tactic_string)
+  return f'Parse_tactic.parse {put_in_quotes(tactic_string)}'
 
 
 def tactic_application_to_string(t_app: deephol_pb2.TacticApplication) -> Text:
@@ -61,15 +61,11 @@ def tactic_application_to_string(t_app: deephol_pb2.TacticApplication) -> Text:
             (t_app.tactic, i))
       tactic_str += theorem_fingerprint.ToTacticArgument(param.theorems[0])
     elif param.parameter_type == deephol_pb2.Tactic.THEOREM_LIST:
-      if not param.theorems:
-        tactic_str += '[ ]'
-      else:
-        tactic_str += str('[ %s ]' % ' ; '.join([
-            theorem_fingerprint.ToTacticArgument(thm) for thm in param.theorems
-        ]))
+      tactic_str += ('[ ]' if not param.theorems else str(
+          f"[ {' ; '.join([theorem_fingerprint.ToTacticArgument(thm) for thm in param.theorems])} ]"
+      ))
     else:
-      raise ProofFailedError('Unsupported param type: %s' %
-                             str(param.parameter_type))
+      raise ProofFailedError(f'Unsupported param type: {str(param.parameter_type)}')
   return tactic_str
 
 
@@ -110,9 +106,9 @@ def proof_linearization(proof_log: deephol_pb2.ProofLog
     try:
       proofnode = node_dict[fingerprint]
     except KeyError:
-      raise ProofFailedError('Subgoal not found in proof log: %s.' % str(goal))
+      raise ProofFailedError(f'Subgoal not found in proof log: {str(goal)}.')
     if not proofnode.proofs:
-      raise ProofFailedError('No tactic app found for goal %s' % str(goal))
+      raise ProofFailedError(f'No tactic app found for goal {str(goal)}')
     if len(proofnode.proofs) > 1:
       tf.logging.warning('Multiple proofs detected for goal; ignoring all but '
                          'the first one.')
@@ -143,11 +139,7 @@ def ocaml_proof(proof_log: deephol_pb2.ProofLog) -> List[Text]:
   theorem = proof_log.theorem_in_database
   lines = ['']
   if theorem.pretty_printed:
-    # Quotes around the expression are necessary to avoid
-    # interpretation of '(*' and '*)' as nested comments.
-    lines.append('(* "%s" *)' % theorem.pretty_printed)
-    lines.append('')
-
+    lines.extend((f'(* "{theorem.pretty_printed}" *)', ''))
   tactics = proof_linearization(proof_log)
   ocaml_parsed_tactics = [
       _tactic_string_to_ocaml(tactic_application_to_string(tactic))

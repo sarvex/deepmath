@@ -109,9 +109,10 @@ class ProofLogToTFExample(object):
     theorems = []
     hard_negatives = []
     for parameter in tactic_application.parameters:
-      if parameter.theorems and not (
-          parameter.parameter_type == deephol_pb2.Tactic.THEOREM or
-          parameter.parameter_type == deephol_pb2.Tactic.THEOREM_LIST):
+      if parameter.theorems and parameter.parameter_type not in [
+          deephol_pb2.Tactic.THEOREM,
+          deephol_pb2.Tactic.THEOREM_LIST,
+      ]:
         raise ValueError('Unexpected theorem parameters or incorrect type.')
 
       theorems += [
@@ -138,11 +139,10 @@ class ProofLogToTFExample(object):
       A dictionary that maps the names of the features to tf.train.Feature
       objects.
     """
-    thm_features = {
+    return {
         # theorem parameters in tactic application
         'thms': self._bytes_feature(theorem_parameters),
     }
-    return thm_features
 
   def _proof_step_features(self, goal_proto: proof_assistant_pb2.Theorem,
                            tactic_application: deephol_pb2.TacticApplication
@@ -153,7 +153,7 @@ class ProofLogToTFExample(object):
     tactic_id = self.tactic_name_id_map[tactic_application.tactic]
     theorem_parameters, hard_negatives = self._extract_theorem_parameters(
         tactic_application)
-    features.update(self._get_thm_features(theorem_parameters))
+    features |= self._get_thm_features(theorem_parameters)
     features.update({
         # preprocessed goal's hypotheses
         'goal_asl': self._bytes_feature(goal_proto.hypotheses),
@@ -182,13 +182,11 @@ class ProofLogToTFExample(object):
 
   def process_proof_log(self, proof_log: deephol_pb2.ProofLog):
     for proof_node in proof_log.nodes:
-      for example in self.process_proof_node(proof_node):
-        yield example
+      yield from self.process_proof_node(proof_node)
 
   def process_proof_logs(self, proof_logs):
     for proof_log in proof_logs:
-      for example in self.process_proof_log(proof_log):
-        yield example
+      yield from self.process_proof_log(proof_log)
 
   def to_negative_example(self, negative_theorem: proof_assistant_pb2.Theorem
                          ) -> tf.train.Example:
@@ -219,11 +217,11 @@ def create_processor(
 
   if options.replacements_hack:
     logging.warning('Replacments hack is enabled.')
-    tactics_name_id_map.update({
+    tactics_name_id_map |= {
         'GEN_TAC': 8,
         'MESON_TAC': 11,
         'CHOOSE_TAC': 34,
-    })
+    }
   if options.format != options_pb2.ConvertorOptions.HOLPARAM:
     raise ValueError('Unknown options_pb2.ConvertorOptions.TFExampleFormat.')
   return ProofLogToTFExample(tactics_name_id_map, theorem_database, options)

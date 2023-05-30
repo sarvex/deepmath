@@ -102,10 +102,8 @@ class ArithmeticRecursiveGenerativeModel(object):
 
     named_ops = {}
     for binop in ('plus', 'minus'):
-      named_ops['split_' + binop] = loom_ops.split('split_' + binop, 2,
-                                                   emb_size)
-      named_ops['merge_' + binop] = loom_ops.merge('merge_' + binop, 2,
-                                                   emb_size)
+      named_ops[f'split_{binop}'] = loom_ops.split(f'split_{binop}', 2, emb_size)
+      named_ops[f'merge_{binop}'] = loom_ops.merge(f'merge_{binop}', 2, emb_size)
     named_ops['split_number'] = loom_ops.split('split_number', 1, emb_size)
     named_ops['merge_number'] = loom_ops.merge('merge_number', 1, emb_size)
 
@@ -198,7 +196,7 @@ class ArithmeticRecursiveGenerativeModel(object):
       # This forms a pre-order traversal of the 'which' decisions
       # we need to make throughout the tree.
       loom_input.add_output(loom_input.which_term(embedding))
-      child_embeddings = loom_input.op('split_' + term_type, [embedding])
+      child_embeddings = loom_input.op(f'split_{term_type}', [embedding])
       for child_expr, child_embedding in zip(expr[1:], child_embeddings):
         self.build_expr_downward(loom_input, child_expr, child_embedding)
     else:
@@ -221,7 +219,7 @@ class ArithmeticRecursiveGenerativeModel(object):
     if isinstance(term_type, six.string_types):
       child_embeddings = [self.read_expr_upward(loom_input, child_expr)
                           for child_expr in expr[1:]]
-      return loom_input.op('merge_' + term_type, child_embeddings)[0]
+      return loom_input.op(f'merge_{term_type}', child_embeddings)[0]
     else:
       return loom_input.named_tensor('number_%d' % term_type)
 
@@ -278,15 +276,15 @@ class ArithmeticRecursiveGenerativeModel(object):
 
       simple_type = ('term' if node.value in ('plus', 'minus', None) else
                      'number')
-      which_type = 'which_' + simple_type
-      sample_type = 'sample_' + simple_type
+      which_type = f'which_{simple_type}'
+      sample_type = f'sample_{simple_type}'
 
       if node.value is None:
         # We are handling the dummy node which is treated as
         # the parent of the true root node.
         split_embs = [emb]
       else:
-        split_embs = loom_input.op('split_' + node.value, [emb])
+        split_embs = loom_input.op(f'split_{node.value}', [emb])
       assert len(node.children) == len(split_embs)
       for split_emb in split_embs:
         sampled_type = loom_input.op(

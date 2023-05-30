@@ -79,10 +79,7 @@ def batched_run(inputs, evaluator, max_batch_size):
   batched_inputs = [batch_array(a, max_batch_size) for a in inputs]
   outputs = [evaluator(*batch) for batch in zip(*batched_inputs)]
   assert outputs
-  if len(outputs) == 1:
-    return outputs[0]
-  else:
-    return np.concatenate(outputs)
+  return outputs[0] if len(outputs) == 1 else np.concatenate(outputs)
 
 
 class ProofState(

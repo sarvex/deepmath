@@ -100,5 +100,4 @@ class Model(model.Model):
     net = tf.concat((conjecture_embedding, axiom_embedding), 1)
     net = self.dropout(net)
     net = layers.relu(net, 1024, weights_regularizer=self.regularizer)
-    logits = tf.squeeze(layers.linear(net, 1), [-1])
-    return logits
+    return tf.squeeze(layers.linear(net, 1), [-1])
