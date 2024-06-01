@@ -18,11 +18,11 @@ local_repository(
 # Needs to be kept in sync with the same target in TensorFlow's WORKSPACE file.
 http_archive(
     name = "io_bazel_rules_closure",
-    sha256 = "43c9b882fa921923bcba764453f4058d102bece35a37c9f6383c713004aacff1",
-    strip_prefix = "rules_closure-9889e2348259a5aad7e805547c1a0cf311cfcd91",
+    sha256 = "1e61cf4a9ea6a76e99763ea3700c983fae59246377f81b79bc517a3f6934c0c2",
+    strip_prefix = "rules_closure-26321bf918b16858f045d40e204482910e1dc649",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_closure/archive/9889e2348259a5aad7e805547c1a0cf311cfcd91.tar.gz",
-        "https://github.com/bazelbuild/rules_closure/archive/9889e2348259a5aad7e805547c1a0cf311cfcd91.tar.gz",  # 2018-12-21
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_closure/archive/26321bf918b16858f045d40e204482910e1dc649.tar.gz",
+        "https://github.com/bazelbuild/rules_closure/archive/26321bf918b16858f045d40e204482910e1dc649.tar.gz",  # 2018-12-21
     ],
 )
 
