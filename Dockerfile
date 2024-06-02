@@ -1,4 +1,4 @@
-FROM l.gcr.io/google/bazel:0.24.1
+FROM l.gcr.io/google/bazel:3.5.0
 WORKDIR /home
 
 # Dependencies.
